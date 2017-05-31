@@ -1,9 +1,22 @@
+/**
+ *  A motor control library for the NextBot .
+ *  Motor Driver: DRV8835
+ *
+ *  Control individual motor and robot. Also includes PID for straight-line motion.
+ *
+ *  @author Siddhesh Nachane
+ *  @version 0.9 03-03-2017
+ *
+ *  Updates:
+ *  1. @SiddheshNachane - changed the library for DRV8835 - 31-05-2017
+ */
+
 #include "NextBotMotors.h"
 
-NextBotMotors::NextBotMotors(uint8_t mL_dirA, uint8_t mL_dirB, uint8_t mL_pwm,
-    uint8_t mR_dirA, uint8_t mR_dirB, uint8_t mR_pwm):
-    _mL_dirA(mL_dirA), _mL_dirB(mL_dirB), _mL_pwm(mL_pwm),
-    _mR_dirA(mR_dirA), _mR_dirB(mR_dirB), _mR_pwm(mR_pwm)
+NextBotMotors::NextBotMotors(uint8_t mL_dir, uint8_t mL_pwm, 
+    uint8_t mR_dir, uint8_t mR_pwm):
+    _mL_dir(mL_dir), _mL_pwm(mL_pwm),
+    _mR_dir(mR_dir), _mR_pwm(mR_pwm)
 {
     setOutputLimits(0, 255);
     _mL_encAdd = _mR_encAdd = 1;
@@ -13,10 +26,8 @@ NextBotMotors::NextBotMotors(uint8_t mL_dirA, uint8_t mL_dirB, uint8_t mL_pwm,
 
 void NextBotMotors::begin()
 {
-    pinMode(_mL_dirA, OUTPUT);
-    pinMode(_mL_dirB, OUTPUT);
-    pinMode(_mR_dirA, OUTPUT);
-    pinMode(_mR_dirB, OUTPUT);  
+    pinMode(_mL_dir, OUTPUT);
+    pinMode(_mR_dir, OUTPUT);  
     _encEnable = false;  
 }
 
@@ -52,22 +63,12 @@ void NextBotMotors::_setLeftMotorDir(uint8_t dir)
     switch(dir)
     {
         case FORWARD:
-            digitalWrite(_mL_dirA, HIGH);
-            digitalWrite(_mL_dirB, LOW);
+            digitalWrite(_mL_dir, LOW);
             _mL_encAdd = 1;
             break;
         case REVERSE:
-            digitalWrite(_mL_dirA, LOW);
-            digitalWrite(_mL_dirB, HIGH);
+            digitalWrite(_mL_dir, HIGH);
             _mL_encAdd = -1;
-            break;
-        case STOP:
-            digitalWrite(_mL_dirA, LOW);
-            digitalWrite(_mL_dirB, LOW);
-            break;
-        case BRAKE:
-            digitalWrite(_mL_dirA, HIGH);
-            digitalWrite(_mL_dirB, HIGH);
             break;
     }
 }
@@ -77,57 +78,26 @@ void NextBotMotors::_setRightMotorDir(uint8_t dir)
     switch(dir)
     {
         case FORWARD:
-            digitalWrite(_mR_dirA, HIGH);
-            digitalWrite(_mR_dirB, LOW);
+            digitalWrite(_mR_dir, LOW);
             _mR_encAdd = 1;
             break;
         case REVERSE:
-            digitalWrite(_mR_dirA, LOW);
-            digitalWrite(_mR_dirB, HIGH);
+            digitalWrite(_mR_dir, HIGH);
             _mR_encAdd = -1;
-            break;
-        case STOP:
-            digitalWrite(_mR_dirA, LOW);
-            digitalWrite(_mR_dirB, LOW);
-            break;
-        case BRAKE:
-            digitalWrite(_mR_dirA, HIGH);
-            digitalWrite(_mR_dirB, HIGH);
             break;
     }
 }
 
 void NextBotMotors::move(uint8_t dir, uint8_t velocity)
 {
-    if(dir == STOP || dir == BRAKE) _mL_out = 0;
-    else _mL_out = map(velocity, 0, 100, _outMin, _outMax);
-    _iTerm = _mR_out = _mL_out;
-
-    _setLeftMotorDir(dir);
-    _setRightMotorDir(dir);
-
-    analogWrite(_mL_pwm, _mL_out);
-    analogWrite(_mR_pwm, _mR_out);
-
+    leftMotor(dir, velocity);
+    rightMotor(dir, velocity);
+    _iTerm = _mL_out;
     _moving = true;
 }
 
 void NextBotMotors::stop()
 {
-    _setLeftMotorDir(STOP);
-    _setRightMotorDir(STOP);
-
-    analogWrite(_mL_pwm, 0);
-    analogWrite(_mR_pwm, 0);
-
-    _moving = false;
-}
-
-void NextBotMotors::brake()
-{
-    _setLeftMotorDir(BRAKE);
-    _setRightMotorDir(BRAKE);
-
     analogWrite(_mL_pwm, 0);
     analogWrite(_mR_pwm, 0);
 
@@ -136,19 +106,23 @@ void NextBotMotors::brake()
 
 void NextBotMotors::leftMotor(uint8_t dir, uint8_t velocity)
 {
-    if(dir == STOP || dir == BRAKE) _mL_out = 0;
-    else _mL_out = map(velocity, 0, 100, _outMin, _outMax);
+    if(dir == STOP) _mL_out = 0;
+    else {
+        _setLeftMotorDir(dir);
+        _mL_out = map(velocity, 0, 100, _outMin, _outMax);
+    }
 
-    _setLeftMotorDir(dir);
     analogWrite(_mL_pwm, _mL_out);
 }
 
 void NextBotMotors::rightMotor(uint8_t dir, uint8_t velocity)
 {
-    if(dir == STOP || dir == BRAKE) _mR_out = 0;
-    else _mR_out = map(velocity, 0, 100, _outMin, _outMax);
+    if(dir == STOP) _mR_out = 0;
+    else {
+        _setRightMotorDir(dir);
+        _mR_out = map(velocity, 0, 100, _outMin, _outMax);
+    };
 
-    _setRightMotorDir(dir);
     analogWrite(_mR_pwm, _mR_out);
 }
 
@@ -171,7 +145,7 @@ bool NextBotMotors::updateState()
     if(output < _outMin) output = _outMin;
     
     _mL_out = output;
-    analogWrite(_mR_pwm, _mL_out);
+    analogWrite(_mL_pwm, _mL_out);
 
     _lastInput = input;
     _lastUpdate = now;

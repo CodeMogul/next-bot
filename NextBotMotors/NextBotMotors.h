@@ -1,3 +1,16 @@
+/**
+ *  A motor control library for the NextBot .
+ *  Motor Driver: DRV8835
+ *
+ *  Control individual motor and robot. Also includes PID for straight-line motion.
+ *
+ *  @author Siddhesh Nachane
+ *  @version 0.9 03-03-2017
+ *
+ *  Updates:
+ *  1. @SiddheshNachane - changed the library for DRV8835 - 31-05-2017
+ */
+ 
 #ifndef NextBotMotors_h
 #define NextBotMotors_h
 
@@ -6,13 +19,12 @@
 #define FORWARD 101
 #define REVERSE 102
 #define STOP 103
-#define BRAKE 104
 
 class NextBotMotors 
 {
     public:
-        NextBotMotors(uint8_t mL_dirA, uint8_t mL_dirB, uint8_t mL_pwm,
-                    uint8_t mR_dirA, uint8_t mR_dirB, uint8_t mR_pwm);
+        NextBotMotors(uint8_t mL_dir, uint8_t mL_pwm,
+                    uint8_t mR_dir, uint8_t mR_pwm);
 
         /** begin() functions needs to be called to initiate hardware pins. 
          *
@@ -54,8 +66,8 @@ class NextBotMotors
 
     private:
         bool _moving;
-        uint8_t _mL_dirA, _mL_dirB, _mL_pwm;
-        uint8_t _mR_dirA, _mR_dirB, _mR_pwm;
+        uint8_t _mL_dir, _mL_pwm;
+        uint8_t _mR_dir, _mR_pwm;
         uint16_t _mL_out, _mR_out;
         uint16_t _outMin, _outMax;
 
