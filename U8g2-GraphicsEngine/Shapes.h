@@ -86,6 +86,15 @@ class Shape
          */
         virtual void draw(display&) = 0;
 
+        /** Virtual destructor for Shape (Base) Class
+         *
+         *  A virtual destructor is required, so that, when delete is called on
+         *  base class's pointer pointing to any Derived class's object, it also Calls
+         *  the Derived class destructor. If not declared virtual, it will only call Base
+         *  Class destructor.
+         */
+        virtual ~Shape() {};
+
     protected:
         uint8_t startX,    /**< x-coordinate for the reference point of the shape.\ 
                                 Should be set by the constructor of derived class.*/
@@ -96,7 +105,7 @@ class Shape
                 endY;       /**< y-coordinate for the final point of the shape.\  
                                 Is set by initAnimation().*/
         int16_t dX, dY, stepX, stepY;
-        int16_t err, err2;
+        int16_t err;
         
 };
 
