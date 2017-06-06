@@ -44,7 +44,7 @@ bool Shape::move()
 
     changeX = 0;
     changeY = 0;
-    err2 = err;
+    int16_t err2 = err;
 
     if (err2 > -dX)
     {
