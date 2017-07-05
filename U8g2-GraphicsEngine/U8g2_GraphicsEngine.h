@@ -11,6 +11,16 @@
 #include "Arduino.h"
 #include "Shapes.h"
 
+/** A structure representing a Line of Text on the Display.
+ *
+ * Acts as a node in linked list with HEAD = *lines.
+ * Each node stores a line of text that fits on the screen, given the selected font.
+ * Wrapping, etc., should be done before adding string to this list.
+ */
+typedef struct text {
+  char *data;
+  struct text *next;
+} Text;
 
 /** A graphic engine for U8g2 library.
  *
@@ -39,7 +49,7 @@ class GraphicEngine
          *  @param x x-coordinate of final position.
          *  @param y y-coordinate of final position.
          */
-        void glide(uint8_t, uint8_t, uint8_t);
+        void glide(int8_t, uint8_t, uint8_t);
 
         /** Creates a Pixel object and draws it on the frame when updateFrame() is called.
          *  
@@ -49,7 +59,7 @@ class GraphicEngine
          *
          *  @return An integer ID of the object if created, else -1.
          */
-        uint8_t drawPixel(uint8_t, uint8_t);
+        int8_t drawPixel(uint8_t, uint8_t);
 
         /** Creates a Line object and draws it on the frame when updateFrame() is called..
          *  
@@ -60,7 +70,7 @@ class GraphicEngine
          *  
          *  @return An integer ID of the object if created, else -1.
          */
-        uint8_t drawLine(uint8_t, uint8_t, uint8_t, uint8_t);
+        int8_t drawLine(uint8_t, uint8_t, uint8_t, uint8_t);
 
         /** Creates a Line object and draws it on the frame when updateFrame() is called..
          *  
@@ -70,7 +80,7 @@ class GraphicEngine
          *  
          *  @return An integer ID of the object if created, else -1.
          */
-        uint8_t drawCircle(uint8_t, uint8_t, uint8_t);
+        int8_t drawCircle(uint8_t, uint8_t, uint8_t);
 
         /** Creates a Circle object that is filled and draws it on the frame when updateFrame() is called..
          *  
@@ -80,7 +90,7 @@ class GraphicEngine
          *  
          *  @return An integer ID of the object if created, else -1.
          */
-        uint8_t drawDisc(uint8_t, uint8_t, uint8_t);
+        int8_t drawDisc(uint8_t, uint8_t, uint8_t);
 
         /** Creates a Traingle object and draws it on the frame when updateFrame() is called..
          *  
@@ -93,7 +103,7 @@ class GraphicEngine
          *  
          *  @return An integer ID of the object if created, else -1.
          */
-        uint8_t drawTriangle(uint8_t, uint8_t, uint8_t, uint8_t, uint8_t, uint8_t);
+        int8_t drawTriangle(uint8_t, uint8_t, uint8_t, uint8_t, uint8_t, uint8_t);
 
         /** Creates a Rectangle object and draws it on the frame when updateFrame() is called..
          *  
@@ -104,7 +114,7 @@ class GraphicEngine
          *  
          *  @return An integer ID of the object if created, else -1.
          */
-        uint8_t drawRectangle(uint8_t, uint8_t, uint8_t, uint8_t);
+        int8_t drawRectangle(uint8_t, uint8_t, uint8_t, uint8_t);
 
         /** Creates a Rectangle object that is filled and draws it on the frame when updateFrame() is called..
          *  
@@ -115,7 +125,25 @@ class GraphicEngine
          *  
          *  @return An integer ID of the object if created, else -1.
          */
-	    uint8_t drawBox(uint8_t, uint8_t, uint8_t, uint8_t);
+	    int8_t drawBox(uint8_t, uint8_t, uint8_t, uint8_t);
+
+        /** Adds a String to the print buffer, to be printed on the next line.
+         *
+         *  @param str C-type char pointer to a string.
+         */
+        void drawStr(char *str);
+
+        /** Prints the string buffer to the OLED Display.
+         *
+         */
+        void updateStr();
+
+        /** Clear display function.
+         *
+         * Deletes all Shape objects and Text from them Memory/buffer.
+         * Frees the memory and clears the display.
+         */
+        void clear();
 
         /** Member function to draw all current visible and animated objects on the screen.
          *
@@ -128,6 +156,7 @@ class GraphicEngine
         static uint8_t _objCount;   /**< Current nuumber objects present in the GraphicEngine.*/
         Shape **_objects;           /**< A pointer array to all shapes created.*/
         display& _oled;             /**< A local reference to the U8g2 object.*/
+        static Text *lines;         /**< A linked list containing all Text as wrapped Lines. */
 };
 
 #endif

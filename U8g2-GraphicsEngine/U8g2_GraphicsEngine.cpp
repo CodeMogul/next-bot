@@ -10,13 +10,16 @@
 //#include "Shapes.h"
 
 uint8_t GraphicEngine::_objCount = 0;
+Text* GraphicEngine::lines = NULL;
 
 GraphicEngine::GraphicEngine(display& disp, uint8_t maxObjects):_oled(disp), _maxObjects(maxObjects)
 {
     _objects = new Shape*[maxObjects];
+    for(int i = 0 ; i < _maxObjects ; i++) 
+        _objects[i] = NULL;
 }
 
-uint8_t GraphicEngine::drawPixel(uint8_t x, uint8_t y)
+int8_t GraphicEngine::drawPixel(uint8_t x, uint8_t y)
 {
     if(_objCount == _maxObjects) return -1;
 
@@ -25,7 +28,7 @@ uint8_t GraphicEngine::drawPixel(uint8_t x, uint8_t y)
     return _objCount-1;
 }
 
-uint8_t GraphicEngine::drawLine(uint8_t x0, uint8_t y0, uint8_t x1, uint8_t y1)
+int8_t GraphicEngine::drawLine(uint8_t x0, uint8_t y0, uint8_t x1, uint8_t y1)
 {
     if(_objCount == _maxObjects) return -1;
 
@@ -34,7 +37,7 @@ uint8_t GraphicEngine::drawLine(uint8_t x0, uint8_t y0, uint8_t x1, uint8_t y1)
     return _objCount-1;
 }
 
-uint8_t GraphicEngine::drawCircle(uint8_t x, uint8_t y, uint8_t radius)
+int8_t GraphicEngine::drawCircle(uint8_t x, uint8_t y, uint8_t radius)
 {
     if(_objCount == _maxObjects) return -1;
 
@@ -43,7 +46,7 @@ uint8_t GraphicEngine::drawCircle(uint8_t x, uint8_t y, uint8_t radius)
     return _objCount-1;
 }
 
-uint8_t GraphicEngine::drawDisc(uint8_t x, uint8_t y, uint8_t radius)
+int8_t GraphicEngine::drawDisc(uint8_t x, uint8_t y, uint8_t radius)
 {
     if(_objCount == _maxObjects) return -1;
 
@@ -52,7 +55,7 @@ uint8_t GraphicEngine::drawDisc(uint8_t x, uint8_t y, uint8_t radius)
     return _objCount-1;
 }
 
-uint8_t GraphicEngine::drawTriangle(uint8_t x0, uint8_t y0, uint8_t x1, uint8_t y1, uint8_t x2, uint8_t y2)
+int8_t GraphicEngine::drawTriangle(uint8_t x0, uint8_t y0, uint8_t x1, uint8_t y1, uint8_t x2, uint8_t y2)
 {
     if(_objCount == _maxObjects) return -1;
 
@@ -61,7 +64,7 @@ uint8_t GraphicEngine::drawTriangle(uint8_t x0, uint8_t y0, uint8_t x1, uint8_t 
     return _objCount-1;
 }
 
-uint8_t GraphicEngine::drawRectangle(uint8_t x, uint8_t y, uint8_t width, uint8_t height)
+int8_t GraphicEngine::drawRectangle(uint8_t x, uint8_t y, uint8_t width, uint8_t height)
 {
     if(_objCount == _maxObjects) return -1;
 
@@ -70,7 +73,7 @@ uint8_t GraphicEngine::drawRectangle(uint8_t x, uint8_t y, uint8_t width, uint8_
     return _objCount-1;
 }
 
-uint8_t GraphicEngine::drawBox(uint8_t x, uint8_t y, uint8_t width, uint8_t height)
+int8_t GraphicEngine::drawBox(uint8_t x, uint8_t y, uint8_t width, uint8_t height)
 {
     if(_objCount == _maxObjects) return -1;
 
@@ -79,29 +82,89 @@ uint8_t GraphicEngine::drawBox(uint8_t x, uint8_t y, uint8_t width, uint8_t heig
     return _objCount-1;
 }
 
-bool GraphicEngine::updateFrame()
+void GraphicEngine::drawStr(char *str)
 {
-    bool change = false;
+    Text *p = new Text();
+    p->data = str;
+    p->next = NULL;
+    if(!lines) lines = p;
+    else {
+        Text *temp = lines;
+        while(temp->next) temp = temp->next;
+        temp->next = p;
+    }
+}
+
+void GraphicEngine::updateStr()
+{
+    Text *temp = lines;
+
+    _oled.setFont(u8g2_font_9x15B_tr);
+    _oled.setFontMode(1);  /* activate transparent font mode */
+    int y = 14;
+
+    while(temp) {
+        _oled.drawStr(0, y, temp->data);
+        temp = temp->next;
+        y = y + 16;
+    } 
+}
+
+void GraphicEngine::clear()
+{
+    // Clear all shapes from Memory
     for(uint8_t i = 0 ; i < _objCount ; i++)
     {
-        if(_objects[i]->move())
-            change =true;
+        delete _objects[i];
+        _objects[i] = NULL;
+    }
+
+    _objCount = 0;
+
+    // Clear all Text from Memory
+    Text *temp = lines, *next;
+    while(temp) {
+        next = temp->next;
+        //delete(temp->data);
+        delete temp;
+        temp = next;
+    }
+    lines = NULL;
+
+    // Clear screen
+    _oled.clear();
+}
+
+bool GraphicEngine::updateFrame()
+{
+    bool print = false;
+    for(uint8_t i = 0 ; i < _objCount ; i++)
+    {
+        if(_objects[i]->_state == VISIBLE || _objects[i]->move())
+            print =true;
     }
      
-    if(change)
+    if(print)
     {
         _oled.firstPage();  
         do {
+            _oled.setDrawColor(1);       /* set Color to On mode for Shapes */
             for(uint8_t i = 0 ; i < _objCount ; i++)
                 _objects[i]->draw(_oled);
+
+            if(lines) {
+                _oled.setDrawColor(2);       /* set Color to XOR mode for Text */
+                updateStr();
+            }
         }
         while(_oled.nextPage());
-        return true;
     }
-    else return false;
+    
+    return print;
 }
 
-void GraphicEngine::glide(uint8_t id, uint8_t x, uint8_t y)
+void GraphicEngine::glide(int8_t id, uint8_t x, uint8_t y)
 {
-	_objects[id]->initAnimation(x,y);
+	if(id > -1 && _objects[id])
+        _objects[id]->initAnimation(x,y);
 }
