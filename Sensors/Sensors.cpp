@@ -38,16 +38,16 @@ void Sensors::begin() {
 }
 
 bool Sensors::getTouch(uint8_t number) {
+    bool state = digitalRead(_touch_pin[number]);
+    return state;
+}
+
+bool Sensors::longTouch(uint8_t number) {
     bool state = true;
     for(uint8_t i = 0 ; i < 6 ; i++) {
         state = state & digitalRead(_touch_pin[number]);
         delay(500);
     }
-    return state;
-}
-
-bool Sensors::longTouch(uint8_t number) {
-    bool state = digitalRead(_touch_pin[number]);
     return state;
 }
 
