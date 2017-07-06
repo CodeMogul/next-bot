@@ -11,6 +11,10 @@
 #include "Arduino.h"
 #include "Wire.h"
 
+#define FORWARD 101
+#define REVERSE 102
+#define STOP 103
+
 /**
  * Command Packet Structure:
  * Byte 1: Start Byte - Always 0x55
@@ -36,6 +40,13 @@ class Command_Packet
 					DrawTriangle		= 0x15,		// Draw Circle on OLED.
 					DrawRectangle		= 0x16,		// Draw Rectangle on OLED.
 					DrawBox 			= 0x17,		// Draw Filed Box on OLED.
+                    DrawText            = 0x18,     // Displays text on the OLED.
+                    ClearScreen         = 0x19,     // Clears the Screen
+                    LeftMotor           = 0x31,     // Move Left Motor.
+                    RightMotor          = 0x32,     // Move Right Motor.
+                    Move                = 0x33,     // Move the complete Bot.
+                    MoveDistance        = 0x34,     // Move the complete Bot for a Given Distance.
+                    Stop                = 0x35
 			};
 		};
 	
@@ -159,6 +170,53 @@ class Communicator
          */
 	    void drawBox(uint8_t, uint8_t, uint8_t, uint8_t);
 
+        /** Sends command to draw a String on OLED Display.
+         *  
+         *  @param str C-Style string.
+         *  
+         */
+	    void drawText(char *);
+
+        /** Sends command to clear the OLED Display.
+         *   
+         */
+	    void clearScreen();
+
+        /** Sends command to move left motor at given speed.
+         *
+         *  @param dir      Direction of Movement, values = {FORWARD, REVERSE, STOP}
+         *  @param speed    speed of the motor, range: (0-255)
+         *
+         */      
+        void leftMotor(uint8_t, uint8_t);
+
+        /** Sends command to move right motor at given speed.
+         *
+         *  @param dir      Direction of Movement, values = {FORWARD, REVERSE, STOP}
+         *  @param speed    speed of the motor, range: (0-255)
+         *
+         */    
+        void rightMotor(uint8_t, uint8_t);
+
+        /** Sends command to move the Bot at given speed.
+         *  @param dir      Direction of Movement, values = {FORWARD, REVERSE, STOP}
+         *  @param speed    speed of the motor, range: (0-255)
+         *
+         */   
+        void move(uint8_t, uint8_t);
+
+        /** Sends command to move the Bot for given distance.
+         *
+         *@param cm Distance to be travelled in centi-meters, range: (0-255)
+         *
+         */    
+        void moveDistance(uint8_t, uint8_t, uint8_t);
+
+
+        /** Sends command to Stop the Bot.
+         *         *
+         */    
+        void stop();
 	private:
 		uint8_t _slaveAddress, _lastCommandID;
 };

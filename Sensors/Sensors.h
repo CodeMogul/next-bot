@@ -14,31 +14,34 @@
   #include <avr/power.h>
 #endif
 
-#define PROX_1  ()
-#define PROX_2  ()
-#define PROX_3  ()
-#define PROX_4  ()
-#define PROX_5  ()
+// Set pins according to PCB Layout
 
-#define BUTTON_1    ()
-#define BUTTON_2    ()
-#define BUTTON_3    ()
-#define BUTTON_4    ()
-#define BUTTON_5    ()
+#define PROX_1  (A3)
+#define PROX_2  (A2)
+#define PROX_3  (A1)
+#define PROX_4  (A0)
+#define PROX_5  (A7)
 
-#define MIC         ()
-#define BUZZER      ()
-#define LED         ()
+#define TOUCH_1    (2)
+#define TOUCH_2    (3)
+#define TOUCH_3    (4)
+#define TOUCH_4    (5)
+#define TOUCH_5    (8)
 
-#define NUMPIXELS   (8)
+#define MIC         (A6)
+#define BUZZER      (6)
+#define LED         (7)
+
+#define NUMPIXELS   (2)
 
 class Sensors {
     public:
         Sensors();
         void begin();
-        bool getButton(uint8_t number);
+        bool getTouch(uint8_t number);
         int getProximity(uint8_t number);
         int getMic();
+        bool longTouch(uint8_t number);
 
         void setLed(uint8_t number, uint8_t r, uint8_t g, uint8_t b);
         void clearLed();
@@ -46,7 +49,7 @@ class Sensors {
 
     private:
         uint8_t _prox_pin[5],
-                _button_pin[5],
+                _touch_pin[5],
                 _mic_pin,
                 _buzzer_pin,
                 _led_pin;

@@ -144,7 +144,7 @@ bool GraphicEngine::updateFrame()
             print =true;
     }
      
-    if(print)
+    if(print || lines)
     {
         _oled.firstPage();  
         do {

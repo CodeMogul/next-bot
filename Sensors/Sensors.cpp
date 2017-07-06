@@ -14,11 +14,11 @@ Sensors::Sensors() {
     _prox_pin[3] = PROX_4;
     _prox_pin[4] = PROX_5;
 
-    _button_pin[0] = BUTTON_1;
-    _button_pin[1] = BUTTON_2;
-    _button_pin[2] = BUTTON_3;
-    _button_pin[3] = BUTTON_4;
-    _button_pin[4] = BUTTON_5;
+    _touch_pin[0] = TOUCH_1;
+    _touch_pin[1] = TOUCH_2;
+    _touch_pin[2] = TOUCH_3;
+    _touch_pin[3] = TOUCH_4;
+    _touch_pin[4] = TOUCH_5;
 
     _mic_pin = MIC;
     _buzzer_pin = BUZZER;
@@ -29,20 +29,29 @@ Sensors::Sensors() {
 
 void Sensors::begin() {
     for(int i = 0 ; i < 5 ; i++) {
-        pinMode(_button_pin[i], INPUT);
+        pinMode(_touch_pin[i], INPUT);
     }
 
     pinMode(_buzzer_pin, OUTPUT);
     pinMode(_led_pin, OUTPUT);
-    _neopixels.begin()
+    _neopixels.begin();
 }
 
-bool Sensors::getButton(uint8_t number) {
-    bool state = digitalRead(_button_pin[number]);
+bool Sensors::getTouch(uint8_t number) {
+    bool state = true;
+    for(uint8_t i = 0 ; i < 6 ; i++) {
+        state = state & digitalRead(_touch_pin[number]);
+        delay(500);
+    }
     return state;
 }
 
-int Sensors::getButton(uint8_t number) {
+bool Sensors::longTouch(uint8_t number) {
+    bool state = digitalRead(_touch_pin[number]);
+    return state;
+}
+
+int Sensors::getProximity(uint8_t number) {
     int val = analogRead(_prox_pin[number]);
     return val;
 }

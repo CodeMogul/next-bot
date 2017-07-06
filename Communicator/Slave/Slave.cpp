@@ -53,12 +53,14 @@ byte* Response_Packet::GetPacketBytes()
 
 // --------------------------------------------------------------
 
-Communicator::Communicator(GraphicEngine& ge):_ge(ge) {}
+Communicator::Communicator(GraphicEngine& ge, NextBotMotors& motors):_ge(ge), _motors(motors) {}
 
 void Communicator::begin(uint8_t i2cAddress)
 {
 	_i2cAddress = i2cAddress;
 	Wire.begin(i2cAddress);
+	_motors.begin();
+	_ge.begin();
 }
 
 void Communicator::recieveCommand()
@@ -79,6 +81,26 @@ void Communicator::executeCommand()
 	_lastCommandID = cp->id;
 	switch(cp->_command)
 	{
+		case Command_Packet::Commands::Move:
+			_motors.move(cp->Parameter[0], cp->Parameter[1]);
+			break;
+
+		// case Command_Packet::Commands::MoveDistance:
+		// 	_motors->moveDistance(cp->Parameter[0], cp->Parameter[1], cp->Parameter[2]);
+		// 	break;
+
+		case Command_Packet::Commands::LeftMotor:
+			_motors.leftMotor(cp->Parameter[0], cp->Parameter[1]);
+			break;
+
+		case Command_Packet::Commands::RightMotor:
+			_motors.rightMotor(cp->Parameter[0], cp->Parameter[1]);
+			break;
+
+		case Command_Packet::Commands::Stop:
+			_motors.stop();
+			break;
+		
 		// case Command_Packet::Commands::DrawPoint:
 		// 	_ge.drawPixel(cp->Parameter[0], cp->Parameter[1]);
 		// 	break;
@@ -106,6 +128,14 @@ void Communicator::executeCommand()
 		case Command_Packet::Commands::DrawBox:
 			_ge.drawBox(cp->Parameter[0], cp->Parameter[1], cp->Parameter[2], cp->Parameter[3]);
 			break;
+
+		case Command_Packet::Commands::DrawText:
+			// recieve data and process;
+			break;
+		
+		case Command_Packet::Commands::ClearScreen:
+			_ge.clear();
+			break;
 	}
 	delete cp;
 	_recieved = false;
@@ -114,7 +144,7 @@ void Communicator::executeCommand()
 void Communicator::sendResponse()
 {
 	Response_Packet *rp = new Response_Packet(_lastCommandID); 
-	byte *packetBytes = rp.GetPacketBytes();
+	byte *packetBytes = rp->GetPacketBytes();
 	rp->status = true;
 
 	Wire.write(packetBytes, 4);

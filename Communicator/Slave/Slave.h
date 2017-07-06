@@ -10,7 +10,9 @@
 
 #include "Arduino.h"
 #include "Wire.h"
+
 #include "U8g2_GraphicsEngine.h"
+#include "NextBotMotors.h"
 
 /**
  * Command Packet Structure:
@@ -37,6 +39,13 @@ class Command_Packet
 					DrawTriangle		= 0x15,		// Draw Circle on OLED.
 					DrawRectangle		= 0x16,		// Draw Rectangle on OLED.
 					DrawBox 			= 0x17,		// Draw Filed Box on OLED.
+					DrawText            = 0x18,     // Displays text on the OLED.
+                    ClearScreen         = 0x19,     // Clears the Screen
+					LeftMotor           = 0x31,     // Move Left Motor.
+                    RightMotor          = 0x32,     // Move Right Motor.
+                    Move                = 0x33,     // Move the complete Bot.
+                    MoveDistance        = 0x34,     // Move the complete Bot for a Given Distance.
+					Stop
 			};
 		};
 	
@@ -86,7 +95,7 @@ class Response_Packet
 class Communicator
 {
 	public:
-		Communicator(GraphicEngine&);
+		Communicator(GraphicEngine&, NextBotMotors&);
 		void begin(uint8_t);
 		void recieveCommand();
 		void executeCommand();
@@ -94,6 +103,8 @@ class Communicator
 
 	private:
 		GraphicEngine& _ge;
+		NextBotMotors& _motors;
+
 		uint8_t _i2cAddress;
 		byte commandBuffer[10];
 		uint8_t _lastCommandID;
