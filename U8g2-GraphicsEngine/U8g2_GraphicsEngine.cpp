@@ -84,9 +84,26 @@ int8_t GraphicEngine::drawBox(uint8_t x, uint8_t y, uint8_t width, uint8_t heigh
 
 void GraphicEngine::drawStr(char *str)
 {
-    Text *p = new Text();
-    p->data = str;
+	uint8_t i = 0;
+	char *temp = str; 
+	while(*temp){
+		temp++;
+		i++;
+	}
+
+	Text *p = new Text();
+    p->data = new char[i+1];;
     p->next = NULL;
+	p->length = i+1;
+
+	i = 0;	
+	temp = str; 
+	while(*temp){
+		p->data[i++] = *temp;
+		temp++;
+	}
+	p->data[i] = '\0';
+
     if(!lines) lines = p;
     else {
         Text *temp = lines;
@@ -111,8 +128,8 @@ void GraphicEngine::updateStr()
 }
 
 void GraphicEngine::clear()
-{
-    // Clear all shapes from Memory
+{   
+	// Clear all shapes from Memory
     for(uint8_t i = 0 ; i < _objCount ; i++)
     {
         delete _objects[i];
@@ -125,7 +142,7 @@ void GraphicEngine::clear()
     Text *temp = lines, *next;
     while(temp) {
         next = temp->next;
-        //delete(temp->data);
+        delete[] temp->data;
         delete temp;
         temp = next;
     }

@@ -44,9 +44,9 @@ bool Sensors::getTouch(uint8_t number) {
 
 bool Sensors::longTouch(uint8_t number) {
     bool state = true;
-    for(uint8_t i = 0 ; i < 6 ; i++) {
+    for(uint8_t i = 0 ; i < 3 ; i++) {
         state = state & digitalRead(_touch_pin[number]);
-        delay(500);
+        delay(333);
     }
     return state;
 }

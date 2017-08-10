@@ -59,6 +59,21 @@ Response_Packet::Response_Packet(byte* buffer, bool UseSerialDebug)
 
 //------------------------------------------------------------------
 
+Data_Packet::Data_Packet(char* str)
+{
+	data[0] = DATA_START_CODE;
+	uint8_t i = 1;
+	for( ; i < 18, *str; i++, str++)
+	{
+		data[i] = *str;
+	}
+	data[i] = '\0';
+	data[19] = DATA_END_CODE;
+}
+
+
+//------------------------------------------------------------------
+
 Communicator::Communicator()
 {
 	randomSeed(analogRead(0));
@@ -67,6 +82,7 @@ Communicator::Communicator()
 void Communicator::begin(uint8_t slaveAddress)
 {
 	_slaveAddress = slaveAddress; 
+	_commandSent = false;
 	Wire.begin();
 }
 
@@ -212,6 +228,10 @@ void Communicator::drawText(char *str)
 
 	delete cp;
 	delete packetbytes;
+
+	Data_Packet *dp = new Data_Packet(str);
+	sendData(dp->data);
+	delete dp;
 }
 
 void Communicator::clearScreen()
@@ -273,7 +293,7 @@ void Communicator::move(uint8_t dir, uint8_t speed)
 	_lastCommandID = random(255);
 	Command_Packet *cp = new Command_Packet(_lastCommandID, Command_Packet::Commands::Move);
 	cp->Parameter[0] = dir;
-	cp->Parameter[1] = speed;
+	cp->Parameter[1] = map(speed, 0, 100, 0, 255);
 	cp->Parameter[2] = 0x00;
 	cp->Parameter[3] = 0x00;
 	cp->Parameter[4] = 0x00;
@@ -304,6 +324,7 @@ void Communicator::moveDistance(uint8_t cm, uint8_t dir, uint8_t speed)
 	delete packetbytes;
 }
 
+
 void Communicator::stop()
 {
 	_lastCommandID = random(255);
@@ -322,16 +343,66 @@ void Communicator::stop()
 	delete packetbytes;
 }
 
+void Communicator::turnAngle(uint8_t degree, uint8_t dir, uint8_t speed)
+{
+	_lastCommandID = random(255);
+	Command_Packet *cp = new Command_Packet(_lastCommandID, Command_Packet::Commands::TurnAngle);
+	float fd = degree;
+	fd = (fd*255/360);
+	degree = fd;
+	cp->Parameter[0] = degree;
+	cp->Parameter[1] = dir;
+	cp->Parameter[2] = speed;
+	cp->Parameter[3] = 0x00;
+	cp->Parameter[4] = 0x00;
+	cp->Parameter[5] = 0x00;
+
+	byte *packetbytes = cp->GetPacketBytes();
+	sendCommand(packetbytes);
+
+	delete cp;
+	delete packetbytes;
+}
+
+void Communicator::turn(uint8_t speed, uint8_t dir)
+{
+	_lastCommandID = random(255);
+	Command_Packet *cp = new Command_Packet(_lastCommandID, Command_Packet::Commands::Turn);
+	cp->Parameter[0] = dir;
+	cp->Parameter[1] = speed;
+	cp->Parameter[2] = 0x00;
+	cp->Parameter[3] = 0x00;
+	cp->Parameter[4] = 0x00;
+	cp->Parameter[5] = 0x00;
+
+	byte *packetbytes = cp->GetPacketBytes();
+	sendCommand(packetbytes);
+
+	delete cp;
+	delete packetbytes;
+}
+
 void Communicator::sendCommand(byte* packetbytes)
 {
 	Wire.beginTransmission(_slaveAddress);
 	Wire.write(packetbytes, 10);
+	Wire.endTransmission();
+	_commandSent = true;
+	delay(30);
+}
+
+void Communicator::sendData(byte* packetbytes)
+{
+	Wire.beginTransmission(_slaveAddress);
+	Wire.write(packetbytes, 20);
 	Wire.endTransmission();
 	delay(30);
 }
 
 bool Communicator::recieveResponse()
 {
+	if(!_commandSent) return true;
+
 	Wire.requestFrom(int(_slaveAddress), 4);
 	while(Wire.available() < 4)	delay(10);
 
@@ -340,8 +411,12 @@ bool Communicator::recieveResponse()
 		temp[i] = Wire.read();
 
 	Response_Packet *rp = new Response_Packet(temp, true);
+	Serial.print("L: ");
+	Serial.print(_lastCommandID);
+	Serial.print("\tR: ");
+	Serial.println(rp->_id);
 	bool retval = rp->status && (_lastCommandID == rp->_id);
 	delete rp;
-
+	_commandSent = !retval;
 	return retval;
 }

@@ -11,9 +11,11 @@
 #include "Arduino.h"
 #include "Wire.h"
 
-#define FORWARD 101
-#define REVERSE 102
+#define FORWARD 1
+#define REVERSE 0
 #define STOP 103
+#define LEFT 1
+#define RIGHT 0
 
 /**
  * Command Packet Structure:
@@ -46,7 +48,9 @@ class Command_Packet
                     RightMotor          = 0x32,     // Move Right Motor.
                     Move                = 0x33,     // Move the complete Bot.
                     MoveDistance        = 0x34,     // Move the complete Bot for a Given Distance.
-                    Stop                = 0x35
+                    Stop                = 0x35,
+                    TurnAngle		    = 0x36,
+                    Turn		        = 0x37,
 			};
 		};
 	
@@ -94,12 +98,34 @@ class Response_Packet
 
 //	----------------------------------------------------------------------------------
 
+/**
+ * Data Packet Structure:
+ * Byte 1: Start Byte - Always 0xDD
+ * Byte 2-19: Data
+ * Byte 20: End Byte - Always 0xAA
+ */
+class Data_Packet
+{
+	public:
+		byte _id;			
+
+		Data_Packet(char* str);
+        	char data[20];
+
+	private: 
+		static const byte DATA_START_CODE = 0xDD;	// Static byte to mark the beginning of a command packet	-	never changes
+		static const byte DATA_END_CODE = 0xAA;		// Static byte to mark the end of a command packet	-	never changes
+};
+
+//	----------------------------------------------------------------------------------
+
 class Communicator
 {
 	public:
 		Communicator();
 		void begin(uint8_t);
 		void sendCommand(byte*);
+        void sendData(byte*);
 		bool recieveResponse();
 
 		/** Sends command to draw a Line on OLED Display.
@@ -211,6 +237,10 @@ class Communicator
          *
          */    
         void moveDistance(uint8_t, uint8_t, uint8_t);
+        
+	void turn(uint8_t, uint8_t);
+
+	void turnAngle(uint8_t degree, uint8_t dir, uint8_t speed);
 
 
         /** Sends command to Stop the Bot.
@@ -219,6 +249,7 @@ class Communicator
         void stop();
 	private:
 		uint8_t _slaveAddress, _lastCommandID;
+        bool _commandSent;
 };
 
 #endif

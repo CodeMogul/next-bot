@@ -19,6 +19,7 @@
  */
 typedef struct text {
   char *data;
+  uint8_t length;
   struct text *next;
 } Text;
 

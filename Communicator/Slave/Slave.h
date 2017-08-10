@@ -5,14 +5,14 @@
  *  @version 0.9 04-07-2017
  */
 
-#ifndef Master_h
-#define Master_h
+#ifndef Slave_h
+#define Slave_h
 
 #include "Arduino.h"
 #include "Wire.h"
 
 #include "U8g2_GraphicsEngine.h"
-#include "NextBotMotors.h"
+#include "Motion.h"
 
 /**
  * Command Packet Structure:
@@ -31,23 +31,25 @@ class Command_Packet
 			public:
 				enum Commands_Enum
 				{
-					NotSet				= 0x00,		// Default value for enum. Slave will return error if sent this.
-					DrawPoint			= 0x10,		// Draw Point on OLED.
-					DrawLine			= 0x12,		// Draw Line on OLED.
-					DrawCircle			= 0x13,		// Draw Circle on OLED.
-					DrawDisc 			= 0x14,		// Draw Filled Disc on OLED.
-					DrawTriangle		= 0x15,		// Draw Circle on OLED.
-					DrawRectangle		= 0x16,		// Draw Rectangle on OLED.
-					DrawBox 			= 0x17,		// Draw Filed Box on OLED.
-					DrawText            = 0x18,     // Displays text on the OLED.
-                    ClearScreen         = 0x19,     // Clears the Screen
-					LeftMotor           = 0x31,     // Move Left Motor.
-                    RightMotor          = 0x32,     // Move Right Motor.
-                    Move                = 0x33,     // Move the complete Bot.
-                    MoveDistance        = 0x34,     // Move the complete Bot for a Given Distance.
-					Stop
-			};
+					NOT_SET				= 0x00,		// Default value for enum. Slave will return error if sent this.
+					DRAW_POINT			= 0x10,		// Draw Point on OLED.
+					DRAW_LINE			= 0x12,		// Draw Line on OLED.
+					DRAW_CIRCLE			= 0x13,		// Draw Circle on OLED.
+					DRAW_DISC 			= 0x14,		// Draw Filled Disc on OLED.
+					DRAW_TRIANGLE		= 0x15,		// Draw Circle on OLED.
+					DRAW_RECTANGLE		= 0x16,		// Draw Rectangle on OLED.
+					DRAW_BOX  			= 0x17,		// Draw Filed Box on OLED.
+					DRAW_TEXT        	= 0x18,     // Displays text on the OLED.
+          			CLEAR_SCREEN    	= 0x19,     // Clears the Screen
+		      		LEFT_MOTOR     		= 0x31,     // Move Left Motor.
+					RIGHT_MOTOR    		= 0x32,
+					MOVE           		= 0X33,
+					MOVE_TO        		= 0x34, 
+					STOP           		= 0X35,
+					TURN_ANGLE     		= 0X36,
+					TURN           		= 0X37
 		};
+	};
 	
 		byte id;										// An unique id for each new command.	
 		byte Parameter[6];								// Parameter 6 bytes, changes meaning depending on command							
@@ -95,7 +97,7 @@ class Response_Packet
 class Communicator
 {
 	public:
-		Communicator(GraphicEngine&, NextBotMotors&);
+		Communicator(GraphicEngine&, Motion&);
 		void begin(uint8_t);
 		void recieveCommand();
 		void executeCommand();
@@ -103,12 +105,14 @@ class Communicator
 
 	private:
 		GraphicEngine& _ge;
-		NextBotMotors& _motors;
+		Motion& _motors;
 
 		uint8_t _i2cAddress;
-		byte commandBuffer[10];
-		uint8_t _lastCommandID;
-		bool _recieved;
+		volatile uint8_t _lastCommandID;
+		
+		volatile byte commandBuffer[10];
+		volatile char dataBuffer[20];
+		volatile bool _recieved, _dataRecieved;
 };
 
 #endif
